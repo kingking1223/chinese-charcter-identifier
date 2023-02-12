@@ -3,7 +3,7 @@
 #include <wx/spinctrl.h>
 #include <wx/radiobox.h>
 
-MainFrame::MainFrame(const wxString& title): wxFrame(nullptr, wxID_ANY, title) {
+MainFrame::MainFrame(const wxString& title): wxFrame(nullptr, wxID_ANY, title), m_mouseDown(false) {
     // wxPanel* panel = new wxPanel(this);
 
     // wxButton* button = new wxButton(panel, wxID_ANY, "Button", wxPoint(150, 50), wxSize(100, 35));
@@ -39,19 +39,46 @@ MainFrame::MainFrame(const wxString& title): wxFrame(nullptr, wxID_ANY, title) {
     Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnMouseLeftDown));
     Connect(wxEVT_LEFT_UP, wxMouseEventHandler(MainFrame::OnMouseLeftUp));
     Connect(wxEVT_MOTION, wxMouseEventHandler(MainFrame::OnMouseMove));
+
+    m_displayArea = wxRect(m_drawingArea.GetRight() + 72, 72, 348, 348);
+    m_bitmap = wxBitmap(64, 64);
+    m_displayMemoryDC.SelectObject(m_bitmap);
+    m_displayMemoryDC.SetPen(wxPen(wxColour("WHITE"), 2));
 }
 
 void MainFrame::OnPaint(wxPaintEvent& event)
 {
     wxPaintDC dc(this);
 
-    dc.SetPen(wxPen(wxColour("WHITE"), 2));
+    wxPen pen(*wxWHITE, 2);
+    dc.SetPen(pen);
     dc.SetBrush(wxBrush(wxColour("#101010")));
+
     dc.DrawRectangle(m_drawingArea);
 
-    if (m_points.size() > 1)
+    wxMemoryDC displayMemoryDC;
+    displayMemoryDC.SelectObject(m_bitmap);
+
+    displayMemoryDC.SetBackground(*wxBLACK_BRUSH);
+    displayMemoryDC.Clear();
+
+    wxImage image = m_bitmap.ConvertToImage();
+    image.Rescale(348, 348);
+    wxBitmap resizedBitmap(image);
+
+    dc.DrawBitmap(resizedBitmap, m_displayArea.GetLeft(), m_displayArea.GetTop());
+
+    if (line.size() >= 2)
     {
-        dc.DrawLines(m_points.size(), &m_points[0]);
+        dc.DrawLines(line.size(), &line[0], m_drawingArea.GetLeft(), m_drawingArea.GetTop());
+    }
+
+    for (const auto &line : m_lines)
+    {
+        if (line.size() >= 2)
+        {
+            dc.DrawLines(line.size(), &line[0]);
+        }
     }
 }
 
@@ -59,22 +86,44 @@ void MainFrame::OnMouseLeftDown(wxMouseEvent& event)
 {
     if (m_drawingArea.Contains(event.GetPosition()))
     {
-        m_points.push_back(event.GetPosition() + wxPoint(72, 72) - wxPoint(m_drawingArea.x, m_drawingArea.y));
+        m_points.clear();
+        m_points.push_back(event.GetPosition() - wxPoint(m_drawingArea.x, m_drawingArea.y) + wxPoint(72, 72));
         m_mouseLeftDown = true;
-        Refresh();
     }
 }
 
 void MainFrame::OnMouseLeftUp(wxMouseEvent& event)
 {
-    m_mouseLeftDown = false;
+    if (m_mouseLeftDown)
+    {
+        m_mouseLeftDown = false;
+        if (m_points.size() >= 2)
+        {
+            m_lines.push_back(m_points);
+            m_points.clear();
+        }
+
+        wxClientDC dc(this);
+        dc.SetPen(wxPen(*wxWHITE, 3));
+        dc.SetBrush(*wxWHITE_BRUSH);
+        dc.DrawLines(m_lines.back().size(), &m_lines.back()[0]);
+    }
 }
 
 void MainFrame::OnMouseMove(wxMouseEvent& event)
 {
-    if (m_mouseLeftDown && m_drawingArea.Contains(event.GetPosition()))
+    if (m_mouseLeftDown)
     {
-        m_points.push_back(event.GetPosition() + wxPoint(72, 72) - wxPoint(m_drawingArea.x, m_drawingArea.y));
-        Refresh();
+        wxPoint point = event.GetPosition() + wxPoint(72, 72) - wxPoint(m_drawingArea.x, m_drawingArea.y);
+        if (m_drawingArea.Contains(point - wxPoint(72, 72) + wxPoint(m_drawingArea.x, m_drawingArea.y)))
+        {
+            m_points.push_back(point);
+            m_lines.push_back(m_points);
+            Refresh();
+        }
+        else
+        {
+            m_mouseLeftDown = false;
+        }
     }
 }

@@ -13,4 +13,16 @@ class MainFrame : public wxFrame {
         std::vector<wxPoint> m_points;
         bool m_mouseLeftDown;
         wxRect m_drawingArea;
+
+        wxRect m_displayArea;
+        wxBitmap m_bitmap;
+        wxMemoryDC m_displayMemoryDC;
+
+        wxPoint m_lastPoint;
+        wxPen m_pen;
+        std::vector<std::vector<wxPoint>> m_lines;
+        bool m_drawingStarted;
+        std::vector<wxPoint> line;
+
+        bool m_mouseDown;
 };
