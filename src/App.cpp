@@ -5,7 +5,7 @@
 wxIMPLEMENT_APP(App);
 
 bool App::OnInit() {
-    MainFrame* mainFrame = new MainFrame("C++ GUI");
+    MainFrame* mainFrame = new MainFrame("Chinese Character Identifier");
     mainFrame->SetClientSize(1024, 768);
     mainFrame->Center();
     mainFrame->Show();

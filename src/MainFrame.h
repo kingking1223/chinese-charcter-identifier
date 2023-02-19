@@ -9,6 +9,7 @@ class MainFrame : public wxFrame {
         void OnMouseLeftDown(wxMouseEvent& event);
         void OnMouseLeftUp(wxMouseEvent& event);
         void OnMouseMove(wxMouseEvent& event);
+        void OnClearButtonClick(wxCommandEvent& event);
 
         std::vector<wxPoint> m_points;
         bool m_mouseLeftDown;
@@ -25,4 +26,6 @@ class MainFrame : public wxFrame {
         std::vector<wxPoint> line;
 
         bool m_mouseDown;
+
+        wxButton* m_clearButton;
 };
